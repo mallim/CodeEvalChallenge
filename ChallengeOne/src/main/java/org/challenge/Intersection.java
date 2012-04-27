@@ -1,17 +1,19 @@
 package org.challenge;
 
-import ch.lambdaj.function.matcher.Predicate;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
-import org.hamcrest.Matcher;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-
-import static ch.lambdaj.Lambda.*;
 
 /**
  * Solution for Challenge One - Set Intersection
@@ -24,48 +26,43 @@ import static ch.lambdaj.Lambda.*;
  */
 public class Intersection {
 
-    private List<List<String>> duplicates = new ArrayList< List<String>>();
+    private List<String> duplicates = new ArrayList<String>();
 
     /**
      * Returns the intersections for each processing line
      * @return
      */
-    public List<List<String>> getDuplicates() {
+    public List<String> getDuplicates() {
         return this.duplicates;
     }
 
-    /**
-     * Process an inputstream based on the requirement
-     *
-     * @param input a file inputstream
-     * @throws IOException
-     */
-    public void process(InputStream input) throws IOException {
-        try {
+    public void process2( InputStream input ){
 
-            LineIterator it = IOUtils.lineIterator(input, "UTF-8");
+        Function<String,String> findDupe = new Function<String,String>() {
 
-            while( it.hasNext() )
-            {
+            public String apply(@Nullable String s) {
 
-                Matcher<String> dupeMatcher = new Predicate<String>() {
-
-                    private Set<Integer> uniqueValues = new HashSet<Integer>();
-
-                    @Override
-                    public boolean apply(String s) {
-                        Integer output = Integer.valueOf( s );
-                        return uniqueValues.add( output ) == false;
+                Function<String,Integer> StringToIntegerFunction = new Function<String, Integer>() {
+                    public Integer apply(@Nullable String input) {
+                        return Integer.valueOf( input );
                     }
                 };
 
-                List<String> dupePerRow = filter( dupeMatcher, Arrays.asList(it.nextLine().split("[\\s,;]+")) );
-                this.duplicates.add( dupePerRow );
-            }
+                Set<Integer> firstSet =
+                Sets.newLinkedHashSet(
+                    Lists.transform(Arrays.asList(StringUtils.substringBefore(s, ";").split(",")), StringToIntegerFunction )
+                );
 
-        } finally {
-            IOUtils.closeQuietly(input);
-        }
+                Set<Integer> secondSet =
+                Sets.newLinkedHashSet(
+                    Lists.transform(Arrays.asList(StringUtils.substringAfter(s, ";").split(",")), StringToIntegerFunction )
+                );
+
+                return Joiner.on(",").join( Sets.intersection(firstSet, secondSet) );
+            }
+        };
+
+        this.duplicates = ImmutableList.copyOf( Iterators.transform( new Scanner( input ), findDupe ) );
     }
 
     /**
@@ -78,8 +75,8 @@ public class Intersection {
         File file = new File(args[0]);
         try {
             Intersection intersection = new Intersection();
-            intersection.process(FileUtils.openInputStream( file ));
-            for( List<String> duplicateValuesPerRow: intersection.getDuplicates() )
+            intersection.process2(FileUtils.openInputStream(file));
+            for( String duplicateValuesPerRow: intersection.getDuplicates() )
             {
                 System.out.println(duplicateValuesPerRow.toString().replace("[", "").replace("]", ""));
             }
