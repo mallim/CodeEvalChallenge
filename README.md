@@ -6,6 +6,7 @@ The challenges here are being done by the following libraries:
 - Commons IO ( http://commons.apache.org/io/ )
 - lambdaj (  http://code.google.com/p/lambdaj/  )
 - Javolution (  http://javolution.org/  )
+- Google Guava ( http://code.google.com/p/guava-libraries/ )
 
 # How to run the source codes?
 
