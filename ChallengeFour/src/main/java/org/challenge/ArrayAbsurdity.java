@@ -1,17 +1,19 @@
 package org.challenge;
 
-import ch.lambdaj.function.matcher.Predicate;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
-import org.hamcrest.Matcher;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
-
-import static ch.lambdaj.Lambda.selectFirst;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * Solution to Challenge 4 - Array Absurdity
@@ -41,7 +43,7 @@ public class ArrayAbsurdity {
         File file = new File(args[0]);
         try {
             ArrayAbsurdity arrayAbsurdity = new ArrayAbsurdity();
-            arrayAbsurdity.process(FileUtils.openInputStream(file));
+            arrayAbsurdity.process2(FileUtils.openInputStream(file));
             for( String result: arrayAbsurdity.getResults() )
             {
                 System.out.println( result );
@@ -58,33 +60,38 @@ public class ArrayAbsurdity {
         return results;
     }
 
-    public void setResults(List<String> results) {
-        this.results = results;
+    public void process2( InputStream inputStream ) throws  IOException {
+
+        Function<String,String> findDupe = new Function<String,String>() {
+
+            public String apply(@Nullable String input) {
+
+                Function<String,Integer> StringToIntegerFunction = new Function<String, Integer>() {
+                    public Integer apply(@Nullable String s) {
+                        return Integer.valueOf( s );
+                    }
+                };
+
+                Multiset<Integer> perRow = HashMultiset.create(
+                        Lists.transform(Arrays.asList(StringUtils.substringAfter(input, ";").split(",")), StringToIntegerFunction)
+                );
+
+                Multiset.Entry<Integer> result = Iterators.find( perRow.entrySet().iterator(),
+                    new Predicate<Multiset.Entry<Integer>>(){
+
+                        public boolean apply(@Nullable Multiset.Entry<Integer> stringEntry) {
+
+                            return stringEntry.getCount() > 1;
+                        }
+                    }
+                );
+
+                if( result != null ) return result.getElement().toString();
+                return null;
+            }
+        };
+
+        this.results = ImmutableList.copyOf(Iterators.transform(new Scanner(inputStream), findDupe));
     }
 
-    /**
-     * Process the given file stream
-     * @param inputStream
-     * @throws IOException
-     */
-    public void process(InputStream inputStream) throws IOException {
-        LineIterator it = IOUtils.lineIterator(inputStream, "UTF-8");
-
-        while( it.hasNext() )
-        {
-            Matcher<String> dupeMatcher = new Predicate<String>() {
-
-                private Set<Integer> uniqueValues = new HashSet<Integer>();
-
-                @Override
-                public boolean apply(String s) {
-                    Integer output = Integer.valueOf( s );
-                    return uniqueValues.add( output ) == false;
-                }
-            };
-
-            String theLine = it.next();
-            results.add((String) selectFirst(Arrays.asList(theLine.substring(theLine.indexOf(";") + 1).split(",")), dupeMatcher));
-        }
-    }
 }
