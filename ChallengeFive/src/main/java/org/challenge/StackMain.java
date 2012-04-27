@@ -3,6 +3,7 @@ package org.challenge;
 import ch.lambdaj.function.convert.Converter;
 import ch.lambdaj.function.matcher.LambdaJMatcher;
 import ch.lambdaj.function.matcher.Predicate;
+import com.google.common.base.Joiner;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -21,19 +22,15 @@ import static ch.lambdaj.Lambda.filter;
  */
 public class StackMain {
 
-    private List<List<Integer>> results;
+    private List<String> results;
 
     public StackMain()
     {
-        results = new ArrayList<List<Integer>>();
+        results = new ArrayList<String>();
     }
 
-    public List<List<Integer>> getResults() {
+    public List<String> getResults() {
         return results;
-    }
-
-    public void setResults(List<List<Integer>> results) {
-        this.results = results;
     }
 
     /**
@@ -65,7 +62,7 @@ public class StackMain {
             };
 
             String line = it.next();
-            results.add(filter(positionMatcher, new FastListStack(convert(Arrays.asList(line.split("\\s")), stringIntegerConvert))));
+            results.add( Joiner.on(",").join(filter(positionMatcher, new FastListStack(convert(Arrays.asList(line.split("\\s")), stringIntegerConvert)))) );
         }
     }
 
@@ -80,9 +77,9 @@ public class StackMain {
         try {
             StackMain stackProcessor = new StackMain();
             stackProcessor.process(FileUtils.openInputStream(file));
-            for( List<Integer> resultPerRow : stackProcessor.getResults() )
+            for( String resultPerRow : stackProcessor.getResults() )
             {
-                System.out.println(resultPerRow.toString().replace("[", "").replace("]", ""));
+                System.out.println(resultPerRow.replace("[", "").replace("]", ""));
             }
         } catch (IOException e) {
             System.out.println("File Read Error: " + e.getMessage());
